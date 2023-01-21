@@ -225,14 +225,14 @@ class DefenderShip:
 
 class SeaBattle:
     def __init__(self, size):
-        self.around = True
+        self.around = False
+        self.along = False
         self.front = True
         self.win = False
         self.size = size
         self.human_turn = choice((True, False))
         self.player1_pole = GamePole(size)
         self.player2_pole = GamePole(size)
-        self.find_ship_flag = False
         self.coords_to_find_ship = (0, 0)
         self.player1_pole.init()
         self.player2_pole.init()
@@ -254,8 +254,8 @@ class SeaBattle:
             self.player2_pole.killed_ships.append(ship)
             self.win = self.check_win()
 
-    def computer_move(self):
-        x, y = rnt(0, self.size-1), rnt(0, self.size-1)
+    def random_shoot(self):
+        x, y = rnt(0, self.size - 1), rnt(0, self.size - 1)
         while (x, y) in self.player1_pole.closed_cells:
             x, y = rnt(0, self.size - 1), rnt(0, self.size - 1)
         res = self.get_shoot(self.player1_pole, x, y)
@@ -277,12 +277,66 @@ class SeaBattle:
             y_cells = [(x, i) for i in vector_y if i != y]
             cells_to_shoot = x_cells + y_cells
             self.cells_to_shoot = list(filter(lambda cell: cell not in self.player1_pole.closed_cells, cells_to_shoot))
-            self.find_ship_flag = True
+            self.around = True
             self.coords_to_find_ship = (x, y)
         if res == 1:
             ship = self.get_ship(self.player1_pole, y, x)
             self.player1_pole.killed_ships.append(ship)
             self.win = self.check_win()
+
+    def find_around(self):
+        x1, y1 = self.cells_to_shoot.pop(rnt(0, len(self.cells_to_shoot) - 1))
+        res = self.get_shoot(self.player1_pole, x1, y1)
+
+        self.player1_pole.closed_cells.add((x1, y1))
+        if not res:
+            self.player1_pole.open_cells.append((x1, y1))
+            self.human_turn = True
+
+        if res == 1:
+            ship = self.get_ship(self.player1_pole, y1, x1)
+            self.player1_pole.killed_ships.append(ship)
+            self.around = False
+
+        if res == 2:
+            self.main_axis = 'x' if x1 == self.start_cell[0] else 'y'
+            self.current_cell = (x1, y1)
+            self.around = False
+            self.along = True
+            if x1 < self.start_cell[0] or y1 < self.start_cell[1]:
+                self.front = False
+
+    def find_along(self):
+        coords = self.next_coords()
+        x1, y1 = coords if coords else self.next_coords()
+        res = self.get_shoot(self.player1_pole, x1, y1)
+
+        self.player1_pole.closed_cells.add((x1, y1))
+
+        if not res:
+            self.player1_pole.open_cells.append((x1, y1))
+            self.front = False
+            self.human_turn = True
+            self.current_cell = self.start_cell
+
+        if res == 1:
+            ship = self.get_ship(self.player1_pole, y1, x1)
+            self.player1_pole.killed_ships.append(ship)
+            self.front = True
+            self.along = False
+
+        if res == 2:
+            self.current_cell = [x1, y1]
+
+    def computer_move(self):
+        if self.around:
+            self.find_around()
+
+        elif self.along:
+            self.find_along()
+
+        else:
+            self.random_shoot()
 
     def get_shoot(self, pole, x, y):
         cell = pole.get_pole()[y][x]
@@ -302,56 +356,6 @@ class SeaBattle:
     def check_win(self):
         return not all((self.player1_pole.has_ships(), self.player2_pole.has_ships()))
 
-    def find_ship(self):
-        if self.around:
-            x1, y1 = self.cells_to_shoot.pop(rnt(0, len(self.cells_to_shoot)-1))
-            res = self.get_shoot(self.player1_pole, x1, y1)
-
-            self.player1_pole.closed_cells.add((x1, y1))
-            if not res:
-                self.player1_pole.open_cells.append((x1, y1))
-                self.human_turn = True
-                yield
-
-            if res == 1:
-                ship = self.get_ship(self.player1_pole, y1, x1)
-                self.player1_pole.killed_ships.append(ship)
-                self.around = True
-                self.find_ship_flag = False
-                return
-
-            if res == 2:
-                self.main_axis = 'x' if x1 == self.start_cell[0] else 'y'
-                self.current_cell = (x1, y1)
-                self.around = False
-                yield
-
-        else:
-            coords = self.next_coords()
-            x1, y1 = coords if coords else self.next_coords()
-            res = self.get_shoot(self.player1_pole, x1, y1)
-
-            self.player1_pole.closed_cells.add((x1, y1))
-
-            if not res:
-                self.player1_pole.open_cells.append((x1, y1))
-                self.front = False
-                self.human_turn = True
-                self.current_cell = self.start_cell
-                yield
-
-            if res == 1:
-                ship = self.get_ship(self.player1_pole, y1, x1)
-                self.player1_pole.killed_ships.append(ship)
-                self.front = True
-                self.around = True
-                self.find_ship_flag = False
-                return
-
-            if res == 2:
-                self.current_cell = [x1, y1]
-                yield
-
     def next_coords(self):
         x1, y1 = self.current_cell
 
@@ -367,7 +371,8 @@ class SeaBattle:
                 y1 = y1 - 1 if y1 < self.start_cell[1] else self.start_cell[1] - 1
 
         if (x1, y1) in self.player1_pole.closed_cells or (x1, y1) in self.player1_pole.open_cells:
-            self.front = False
+            self.front = not self.front
+            self.current_cell = self.start_cell
             return False
         return x1, y1
 
@@ -385,19 +390,13 @@ class SeaBattle:
         print('                 start game')
         self.show_poles()
         while not self.win:
-            move = self.find_ship()
             print(f'{["                              machine", "human"][self.human_turn]} turn')
 
             if self.human_turn:
                 self.human_move()
             else:
-                if self.find_ship_flag:
-                    try:
-                        next(move)
-                    except StopIteration:
-                        pass
-                else:
-                    self.computer_move()
+                self.computer_move()
+
             self.show_poles()
         print()
         print(f'{["                              machine", "human"][self.human_turn]} win!')
