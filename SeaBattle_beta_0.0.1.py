@@ -7,7 +7,6 @@ class DefenderShipError(Exception):
 
 
 class Descriptor:
-
     def __set_name__(self, owner, name):
         self.name = '_' + name
 
@@ -176,8 +175,7 @@ class GamePole:
             x, y = cell
             pole[y][x] = '*'
 
-
-        return pole #tuple(map(tuple, pole))
+        return pole
 
     def move_ships(self):
         for ship in self.ships:
@@ -250,9 +248,7 @@ class SeaBattle:
 
         self.human_turn = bool(res)
         if res == 1:
-            ship = self.get_ship(self.player2_pole, y, x)
-            self.player2_pole.killed_ships.append(ship)
-            self.win = self.check_win()
+            self.killed_ship_handler(x, y, self.player2_pole)
 
     def random_shoot(self):
         x, y = rnt(0, self.size - 1), rnt(0, self.size - 1)
@@ -280,9 +276,7 @@ class SeaBattle:
             self.around = True
             self.coords_to_find_ship = (x, y)
         if res == 1:
-            ship = self.get_ship(self.player1_pole, y, x)
-            self.player1_pole.killed_ships.append(ship)
-            self.win = self.check_win()
+            self.killed_ship_handler(x, y, self.player1_pole)
 
     def find_around(self):
         x1, y1 = self.cells_to_shoot.pop(rnt(0, len(self.cells_to_shoot) - 1))
@@ -294,8 +288,7 @@ class SeaBattle:
             self.human_turn = True
 
         if res == 1:
-            ship = self.get_ship(self.player1_pole, y1, x1)
-            self.player1_pole.killed_ships.append(ship)
+            self.killed_ship_handler(x1, y1, self.player1_pole)
             self.around = False
 
         if res == 2:
@@ -320,13 +313,17 @@ class SeaBattle:
             self.current_cell = self.start_cell
 
         if res == 1:
-            ship = self.get_ship(self.player1_pole, y1, x1)
-            self.player1_pole.killed_ships.append(ship)
+            self.killed_ship_handler(x1, y1, self.player1_pole)
             self.front = True
             self.along = False
 
         if res == 2:
             self.current_cell = [x1, y1]
+
+    def killed_ship_handler(self, x, y, pole):
+        ship = self.get_ship(pole, y, x)
+        pole.killed_ships.append(ship)
+        self.win = self.check_win()
 
     def computer_move(self):
         if self.around:
