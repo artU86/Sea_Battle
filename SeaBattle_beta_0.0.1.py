@@ -252,12 +252,11 @@ class SeaBattle:
 
     def random_shoot(self):
         x, y = rnt(0, self.size - 1), rnt(0, self.size - 1)
+
         while (x, y) in self.player1_pole.closed_cells:
             x, y = rnt(0, self.size - 1), rnt(0, self.size - 1)
-        res = self.get_shoot(self.player1_pole, x, y)
-        if not res:
-            self.player1_pole.closed_cells.add((x, y))
 
+        res = self.get_shoot(self.player1_pole, x, y)
         self.human_turn = not bool(res)
         self.player1_pole.closed_cells.add((x, y))
 
