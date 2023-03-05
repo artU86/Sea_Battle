@@ -156,8 +156,7 @@ class SeaBattle:
     def show_poles(self):
         lines1 = self.player1_pole.get_pole()
         lines2 = self.player2_pole.get_pole(closed=True)
-        print('human pole', 'machine pole', sep='                    ')
-        print()
+        print('human pole', 'machine pole', sep='                    ', end='\n\n')
         for i in range(self.size):
             print(*lines1[i], end="     |     ")
             print(*lines2[i])
@@ -180,4 +179,8 @@ class SeaBattle:
 
 
 battle = SeaBattle(10)
-battle.main()
+try:
+    battle.main()
+except AttributeError:
+    print(f'around = {battle.around}, along = {battle.along}, front = {battle.front}', sep='\n')
+
