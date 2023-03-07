@@ -156,31 +156,28 @@ class SeaBattle:
     def show_poles(self):
         lines1 = self.player1_pole.get_pole()
         lines2 = self.player2_pole.get_pole(closed=True)
-        print('human pole', 'machine pole', sep='                    ', end='\n\n')
-        for i in range(self.size):
-            print(*lines1[i], end="     |     ")
-            print(*lines2[i])
-        print()
+        with open('message.txt', 'w') as file:
+            print('human pole', 'machine pole', sep='                    ', end='\n\n', file=file)
+            print(f'{["                              machine", "human"][self.human_turn]} turn', file=file)
+            for i in range(self.size):
+                print(*lines1[i], end="     |     ", file=file)
+                print(*lines2[i], file=file)
+            if self.win:
+                print('\n', file=file)
+                print(f'{["                              machine", "human"][self.human_turn]} win!', file=file)
+            print('\n', file=file)
 
     def main(self):
         print('                 start game')
         self.show_poles()
+
         while not self.win:
-            print(f'{["                              machine", "human"][self.human_turn]} turn')
 
             if self.human_turn:
                 self.human_move()
+
             else:
                 self.computer_move()
 
             self.show_poles()
-        print()
-        print(f'{["                              machine", "human"][self.human_turn]} win!')
-
-
-battle = SeaBattle(10)
-try:
-    battle.main()
-except AttributeError:
-    print(f'around = {battle.around}, along = {battle.along}, front = {battle.front}', sep='\n')
 
