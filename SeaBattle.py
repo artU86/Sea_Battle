@@ -16,11 +16,12 @@ class SeaBattle:
         self.player1_pole.init()
         self.player2_pole.init()
 
-    def human_move(self):
-        x, y = map(int, input().split())
-        if (x, y) in self.player2_pole.closed_cells:
-            print('В эту клетку нельзя бить, выберите другую')
-            return
+    def human_move(self, coords):
+        x, y = coords
+        if (x, y) in self.player2_pole.closed_cells or (x, y) in self.player2_pole.open_cells:
+            #print('В эту клетку нельзя бить, выберите другую')
+            return 0
+
         res = self.get_shoot(self.player2_pole, x, y)
 
         self.player2_pole.closed_cells.add((x, y))
@@ -30,6 +31,8 @@ class SeaBattle:
         self.human_turn = bool(res)
         if res == 1:
             self.killed_ship_handler(x, y, self.player2_pole)
+
+        return 1
 
     def random_shoot(self):
         x, y = rnt(0, self.size - 1), rnt(0, self.size - 1)
@@ -157,7 +160,7 @@ class SeaBattle:
         lines1 = self.player1_pole.get_pole()
         lines2 = self.player2_pole.get_pole(closed=True)
         with open('message.txt', 'w') as file:
-            print('human pole', 'machine pole', sep='                    ', end='\n\n', file=file)
+            print('human pole', 'machine pole', sep='                    ', end='\n', file=file)
             print(f'{["                              machine", "human"][self.human_turn]} turn', file=file)
             for i in range(self.size):
                 print(*lines1[i], end="     |     ", file=file)
@@ -165,7 +168,6 @@ class SeaBattle:
             if self.win:
                 print('\n', file=file)
                 print(f'{["                              machine", "human"][self.human_turn]} win!', file=file)
-            print('\n', file=file)
 
     def main(self):
         print('                 start game')
