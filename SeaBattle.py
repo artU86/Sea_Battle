@@ -75,12 +75,13 @@ class SeaBattle:
             self.around = False
 
         if res == 2:
-            self.main_axis = 'x' if x1 == self.start_cell[0] else 'y'
+            self.main_axis = 'y' if x1 == self.start_cell[0] else 'x'
             self.current_cell = (x1, y1)
             self.around = False
             self.along = True
             if x1 < self.start_cell[0] or y1 < self.start_cell[1]:
-                self.front = False
+                self.front = False   #TODO логически изменение этой переменной должно быть только в методе next_coords.
+                                     # пока не придумал как грамотно уместить этот момент в алгоритм метода next_coords
 
     def find_along(self):
         coords = self.next_coords()
@@ -138,17 +139,16 @@ class SeaBattle:
 
     def next_coords(self):
         x1, y1 = self.current_cell
+        axis = [x1, y1][self.main_axis == 'y']
+        if axis == self.size - 1:
+            self.front = False
+        elif axis == 0:
+            self.front = True
 
-        if self.main_axis != 'x':
-            if x1 < self.size - 1 and self.front is True:
-                x1 = x1 + 1 if x1 > self.start_cell[0] else self.start_cell[0] + 1
-            else:
-                x1 = x1 - 1 if x1 < self.start_cell[0] else self.start_cell[0] - 1
+        if self.main_axis == 'x':
+            x1 = max(x1, self.start_cell[0]) + 1 if self.front else min(x1, self.start_cell[0]) - 1
         else:
-            if y1 < self.size - 1 and self.front is True:
-                y1 = y1 + 1 if y1 > self.start_cell[1] else self.start_cell[1] + 1
-            else:
-                y1 = y1 - 1 if y1 < self.start_cell[1] else self.start_cell[1] - 1
+            y1 = max(y1, self.start_cell[1]) + 1 if self.front else min(y1, self.start_cell[1]) - 1
 
         if (x1, y1) in self.player1_pole.closed_cells or (x1, y1) in self.player1_pole.open_cells:
             self.front = not self.front
@@ -168,18 +168,3 @@ class SeaBattle:
             if self.win:
                 print('\n', file=file)
                 print(f'{["                              machine", "human"][self.human_turn]} win!', file=file)
-
-    def main(self):
-        print('                 start game')
-        self.show_poles()
-
-        while not self.win:
-
-            if self.human_turn:
-                self.human_move()
-
-            else:
-                self.computer_move()
-
-            self.show_poles()
-

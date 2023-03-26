@@ -14,7 +14,7 @@ class GamePole:
     def __init__(self, size):
         self.open_cells = []
         self.killed_ships = []
-        self.closed_cells = set()
+        self.closed_cells = set()  #TODO почему тут множество?
         self.size = size
         self.ships = []
 

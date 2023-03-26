@@ -15,7 +15,8 @@ try:
         code = int(client.recv(1024).decode('utf-8'))  # прием кода чей ход
         client.send('code accepted on client'.encode())  # отчет о приеме кода
         if code:
-            coords = next(mtx).encode()
+            #coords = input().encode()
+            coords = next(mtx).encode()  #мок для тестов, не всегда корректно работает
             client.send(coords)  # отправка координат хода человека
             answer = int(client.recv(1024).decode('utf-8'))  # прием результата хода человека
             if not answer:
